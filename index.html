@@ -209,6 +209,17 @@
     </div>
   </section>
 
+  <!-- Uhr stellen (Wanduhr): Stunden und Minuten antippen, die Uhr im Spielbild folgt -->
+  <section id="clockPanel" aria-label="Uhr stellen">
+    <header class="ck-head"><b>Uhr stellen</b><small>Die Zeit deines Handys ist schon eingestellt</small></header>
+    <div class="ck-time" aria-live="polite"><span id="ckH">10</span><i>:</i><span id="ckM">00</span></div>
+    <div class="ck-row"><span>Stunde</span>
+      <div class="ck-btns two"><button class="ck-b" data-d="h-1" aria-label="Eine Stunde zurück">−</button><button class="ck-b" data-d="h+1" aria-label="Eine Stunde vor">+</button></div></div>
+    <div class="ck-row"><span>Minute</span>
+      <div class="ck-btns four"><button class="ck-b small" data-d="m-10">−10</button><button class="ck-b" data-d="m-1" aria-label="Eine Minute zurück">−</button><button class="ck-b" data-d="m+1" aria-label="Eine Minute vor">+</button><button class="ck-b small" data-d="m+10">+10</button></div></div>
+    <div class="ck-actions"><button class="ck-now" id="ckNow">Handyzeit</button><button class="ck-ok" id="ckOk">Fertig</button></div>
+  </section>
+
   <div id="perf" hidden></div>
   <div id="toast"></div>
 </div>

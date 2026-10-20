@@ -3,12 +3,15 @@
 // Die App drückt nie wild Tasten, sondern liest über die TouchBridge, wo der Cursor steht,
 // bewegt ihn Schritt für Schritt (mit Kontrolle) zum angetippten Eintrag und bestätigt dann.
 
-import { Bridge, UI, FLAG, START_ACTION } from './bridge.js';
+import { Bridge, UI, FLAG, START_ACTION, CMD } from './bridge.js';
 
 const DIRS = ['Up', 'Down', 'Left', 'Right'];
 
 // Namenseingabe: Tastenfelder auf der Spielseite (Spalte, Zeile)
 export const KB_PAGE = { SYMBOLS: 0, UPPER: 1, LOWER: 2 };
+
+// Einführung: Junge steht links, Mädchen rechts der Trennlinie (siehe GENDER_BRENDAN_X/GENDER_MAY_X in src/main_menu.c)
+const GENDER_SPLIT_X = 180;
 
 // Optionsmenü: wie viele Werte hat jede Zeile
 const OPT_COUNTS = [3, 2, 2, 2, 3, 10];
@@ -32,6 +35,9 @@ export class Input {
     this.running = false; // ein Makro läuft
     this.searching = false;
     this.searchStarted = 0;
+    this.beatFrame = -1000; // Spiel-Frame, in dem die Textebene zuletzt den Herzschlag geschrieben hat
+    this.cmdBroken = false; // das Spiel quittiert keine Befehle (alte ROM): auf Tastendrücke ausweichen
+    this._cmdChain = Promise.resolve();
     this.stickDir = null;
     this.runWanted = false;
     this._raf = this._tick.bind(this);
@@ -221,6 +227,58 @@ export class Input {
   get busy() { return this.running || this.queue.length > 0; }
   clearQueue() { this.queue.length = 0; }
 
+
+  // ---------- Direktbefehle an das Spiel ----------
+  /** Kann die App dem Spiel direkt Befehle geben? (Herzschlag läuft, ROM versteht Befehle) */
+  get cmdOk() {
+    return this.hasBridge && this.bridge.base >= 0 && !this.cmdBroken && this.frame - this.beatFrame < 30;
+  }
+
+  /**
+   * Schickt einen Befehl (CMD.*) und wartet auf die Quittung. Befehle laufen nacheinander (das Spiel nimmt pro Bild einen an).
+   * Liefert 'ok' (angenommen), 'dropped' (das Spiel hat ihn nicht gebraucht), 'timeout' (keine Quittung) oder 'off'.
+   */
+  command(type, arg = 0) {
+    const run = async () => {
+      if (!this.cmdOk) return 'off';
+      const seq = this.bridge.sendCommand(type, arg);
+      if (!seq) return 'off';
+      let res = 'timeout';
+      await this.waitUntil(() => {
+        const a = this.bridge.ackByte();
+        if ((a & 0x7f) !== seq) return false;
+        res = a & 0x80 ? 'dropped' : 'ok';
+        return true;
+      }, 60);
+      if (res === 'timeout' && !this._cmdSeen) this.cmdBroken = true; // noch nie quittiert: ROM kennt keine Befehle
+      else if (res !== 'timeout') this._cmdSeen = true;
+      return res;
+    };
+    const p = this._cmdChain.then(run, run);
+    this._cmdChain = p.catch(() => {});
+    return p;
+  }
+
+  // ---------- Namenseingabe (direkt) ----------
+  /** Taste (Spalte, Zeile) der angezeigten Seite tippen. */
+  nameKey(col, row, page) {
+    if (this.cmdOk) { this.command(CMD.NAME_KEY, (col & 15) | ((row & 15) << 4) | (((page + 1) & 15) << 8)); return true; }
+    return this.enqueue(() => this.kbKey(col, row), 5);
+  }
+  nameBack() {
+    if (this.cmdOk) { this.command(CMD.NAME_BACK); return true; }
+    return this.enqueue(() => this.kbButton(1), 4);
+  }
+  nameOk() {
+    if (this.cmdOk) { this.clearQueue(); this.command(CMD.NAME_OK); return true; }
+    this.clearQueue();
+    return this.enqueue(() => this.kbButton(2), 2);
+  }
+  namePage(page) {
+    if (this.cmdOk) { this.command(CMD.NAME_PAGE, page); return true; }
+    return this.enqueue(() => this.kbSetPage(page), 3);
+  }
+
   // ---------- Menü-Auswahl ----------
   _nextDir(s, target) {
     const n = s.count;
@@ -291,6 +349,11 @@ export class Input {
   }
 
   async selectAndConfirm(idx) {
+    // Einführung: Geschlecht direkt wählen (Cursor bewegen und A drücken gehen verloren, solange das Spiel die Figuren verschiebt)
+    if (this.snap && this.snap.gender && this.cmdOk && idx < 2) {
+      const r = await this.command(CMD.GENDER, idx);
+      if (r !== 'timeout') return r === 'ok';
+    }
     if (await this.selectIndex(idx)) {
       await this.wait(1);
       this.tap('A');
@@ -327,6 +390,14 @@ export class Input {
     if (s.ui === UI.KEYBOARD) {
       if (!inside) return { kind: 'none' };
       return this._keyboardTap(s, gx, gy);
+    }
+    if (s.ui === UI.CLOCK) return { kind: 'none' }; // die Uhr bedient man über die Knöpfe der App
+    if (s.gender && this.cmdOk) {
+      // Einführung: die Figur antippen (links Junge, rechts Mädchen)
+      if (!inside || gy < 10 || gy > 112) return { kind: 'none' };
+      const idx = gx < GENDER_SPLIT_X ? 0 : 1;
+      this.selectAndConfirm(idx);
+      return { kind: 'select', rect: { x: idx ? GENDER_SPLIT_X : GENDER_SPLIT_X - 64, y: 24, w: 64, h: 72 }, index: idx };
     }
     if (s.ui === UI.OPTIONS) {
       if (!inside) return { kind: 'none' };
@@ -394,7 +465,9 @@ export class Input {
     if (this.running) return { kind: 'busy' };
     if (gx >= 176) {
       const btn = gy < 104 ? 0 : gy < 128 ? 1 : 2;
-      this.enqueue(() => this.kbButton(btn), 3);
+      if (btn === 1) this.nameBack();
+      else if (btn === 2) this.nameOk();
+      else this.namePage((kb.page + 1) % 3);
       return { kind: 'none' };
     }
     const row = Math.floor((gy - 80) / 16);
@@ -402,7 +475,8 @@ export class Input {
     let best = -1, bd = 1e9;
     kb.colX.forEach((x, i) => { const d = Math.abs(gx - x); if (d < bd) { bd = d; best = i; } });
     if (best < 0 || bd > 14) return { kind: 'none' };
-    this.enqueue(() => this.kbKey(best, row), 3);
+    const nm = s.name;
+    if (!(nm && nm.chars.length >= nm.max)) this.nameKey(best, row, kb.page);
     return { kind: 'none' };
   }
 

@@ -1621,3 +1621,82 @@ input[type="range"] { width: 130px; accent-color: var(--accent); }
 #perf.bad { color: #ffd0c0; }
 
 #app.tx-dock[data-mode="special"] #dpadToggle { opacity: 0; pointer-events: none; }
+
+
+/* ---------- Uhr stellen ---------- */
+#clockPanel {
+  position: absolute;
+  left: calc(var(--safe-left) + 8px);
+  right: calc(var(--safe-right) + 8px);
+  bottom: calc(var(--safe-bottom) + 8px);
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 12px 12px;
+  font-family: var(--pixel);
+  color: #383838;
+  background: #f8f8f8;
+  border: 3px solid #4a4a68;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 2px #ffffff, inset 0 0 0 4px #b8b8cc, 0 10px 24px rgba(0,0,0,0.5);
+}
+#app[data-mode="clock"] #clockPanel { display: flex; animation: rise 200ms ease-out; }
+#app[data-mode="clock"] #closeX { display: none; }
+.ck-head { display: flex; flex-direction: column; gap: 5px; text-align: center; }
+.ck-head b { font-weight: 400; font-size: 13px; color: #282838; text-transform: uppercase; }
+.ck-head small { font-size: 8px; line-height: 1.5; color: #787890; text-transform: uppercase; }
+.ck-time {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 34px; color: #282838; padding: 4px 0 2px;
+}
+.ck-time i { font-style: normal; color: #f0a020; animation: nmblink 800ms steps(2, jump-none) infinite; }
+.ck-time span { min-width: 2ch; text-align: center; }
+.ck-row { display: flex; align-items: center; gap: 10px; }
+.ck-row > span { flex: none; width: 64px; font-size: 9px; color: #484858; text-transform: uppercase; }
+.ck-btns { flex: 1; display: grid; gap: 6px; }
+.ck-btns.two { grid-template-columns: 1fr 1fr; }
+.ck-btns.four { grid-template-columns: 0.8fr 1fr 1fr 0.8fr; }
+.ck-b {
+  appearance: none;
+  height: 46px;
+  font-family: var(--pixel);
+  font-size: 20px;
+  padding: 0;
+  border: 2px solid #4a4a68;
+  border-bottom-width: 4px;
+  border-radius: 6px;
+  background: #fff;
+  color: #383838;
+  touch-action: none;
+}
+.ck-b.small { font-size: 11px; background: #eef0f8; }
+.ck-b:active { transform: translateY(2px); border-bottom-width: 2px; background: #e4f0ff; }
+.ck-actions { display: grid; grid-template-columns: 1fr 1.2fr; gap: 8px; margin-top: 2px; }
+.ck-now, .ck-ok {
+  appearance: none;
+  height: 48px;
+  font-family: var(--pixel);
+  font-size: 12px;
+  border: 2px solid #4a4a68;
+  border-bottom-width: 4px;
+  border-radius: 6px;
+  background: #dcdce8;
+  color: #383838;
+}
+.ck-ok { background: #58b848; color: #fff; border-color: #2c6a28; text-shadow: 1px 1px 0 rgba(0,0,0,0.35); }
+.ck-ok:disabled { opacity: 0.6; }
+.ck-now:active, .ck-ok:active { transform: translateY(2px); border-bottom-width: 2px; }
+
+/* ---- Hauptmenü (Spielstand + große Knöpfe) ---- */
+.mm-title { display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 2px 2px 4px; }
+.mm-title b { font-size: 15px; font-weight: 400; color: #eafff6; text-shadow: 2px 2px 0 rgba(0,0,0,0.45); letter-spacing: 0.5px; }
+.mm-title small { font-size: 9px; color: #9fb4c8; text-transform: uppercase; }
+.mm-save { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.mm-save > div { display: flex; flex-direction: column; gap: 4px; }
+.mm-save small { font-size: 8px; color: #686880; text-shadow: none; text-transform: uppercase; }
+.mm-save b { font-size: 12px; font-weight: 400; color: #383848; text-shadow: none; }
+.mm-btns { grid-template-columns: 1fr; }
+.mm-btns > :last-child:nth-child(odd) { grid-column: auto; }
+.mm-btns .as-btn { min-height: 64px; }
+.mm-btns .as-btn b { font-size: 14px; }

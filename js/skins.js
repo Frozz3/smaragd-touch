@@ -47,6 +47,8 @@ const LABELS = {
   'WITHDRAW': ['Abheben', 'go'], 'MOVE': ['Verschieben', 'blue'], 'PLACE': ['Ablegen', 'go'], 'RELEASE': ['Freilassen', 'red'],
   'MARK': ['Markieren', 'blue'], 'JUMP': ['Springen', 'blue'], 'WALLPAPER': ['Hintergrund', 'blue'], 'NAME': ['Name', 'blue'],
   'BAG': ['Beutel', 'amber'], 'INFO': ['Info', 'blue'],
+  // Einführung
+  'BOY': ['Junge', 'blue'], 'GIRL': ['Mädchen', 'red'],
 };
 
 // Startmenü-Einträge, für die es eine eigene Oberfläche gibt (nur dort wird das Originalbild verdeckt)
@@ -401,6 +403,8 @@ export class Skins {
         this.shopCache = m.shop;
       }
       sheet = this._shopSheet(snap, m);
+    } else if (snap && snap.main && snap.ui === UI.MENU && !snap.startMenu) {
+      sheet = { kind: 'main', main: snap.main, cursor: snap.cursor };
     } else if (snap && !snap.startMenu && snap.ui !== UI.OPTIONS) {
       sheet = this._genericSheet(snap, m);
     }
@@ -1151,6 +1155,28 @@ export class Skins {
       (desc ? `<p class="as-desc">${esc(desc)}</p>` : '') + mv + '</div>';
   }
 
+  /** Hauptmenü: Spielstand-Karte + große Knöpfe (Eintrag i = Position im Spiel) */
+  _mainMenuHtml(mm) {
+    const items = [];
+    if (mm.type >= 1) items.push(['Weiterspielen', 'go']);
+    items.push(['Neues Spiel', mm.type >= 1 ? 'blue' : 'go']);
+    if (mm.type >= 2) items.push(['Mystery Gift', 'grey']);
+    if (mm.type >= 3) items.push(['Mystery Events', 'grey']);
+    items.push(['Optionen', 'grey']);
+    let h = '<div class="mm-title"><b>Pokémon Smaragd</b><small>Hauptmenü</small></div>';
+    if (mm.type >= 1) {
+      const t = mm.hours + ':' + String(mm.minutes).padStart(2, '0');
+      h += '<div class="gba-win as-card mm-save">' +
+        `<div><small>Spieler</small><b>${esc(mm.name || '?')}</b></div>` +
+        `<div><small>Spielzeit</small><b>${t}</b></div>` +
+        `<div><small>Pokédex</small><b>${mm.dex >= 0 ? mm.dex : '–'}</b></div>` +
+        `<div><small>Orden</small><b>${mm.badges}</b></div></div>`;
+    }
+    h += '<div class="as-btns mm-btns">' + items.map(([t, col], i) =>
+      `<button class="gba-btn as-btn c-${col}" data-act="pick" data-i="${i}"><b>${t}</b></button>`).join('') + '</div>';
+    return h;
+  }
+
   _buttons(labels, arm) {
     return '<div class="as-btns">' + labels.map((t, i) => {
       const [text, col] = labelOf(t);
@@ -1185,7 +1211,7 @@ export class Skins {
   _renderSheet(sh, on) {
     this.sheetKindNow = on && sh ? sh.kind : '';
     this.sheetEl.classList.toggle('on', on);
-    this.backEl.classList.toggle('on', on && !!sh && sh.kind !== 'generic' && sh.kind !== 'bubble' && sh.kind !== 'forget');
+    this.backEl.classList.toggle('on', on && !!sh && sh.kind !== 'generic' && sh.kind !== 'bubble' && sh.kind !== 'forget' && sh.kind !== 'main');
     this.backEl.classList.toggle('blur', on && !!sh && sh.kind === 'mart');
     if (!on) { this.sheetKey = ''; this.wheel = null; }
     if (!sh) return;
@@ -1239,6 +1265,12 @@ export class Skins {
         key = 'gen|' + sh.labels.join('/');
         html = () => this._buttons(sh.labels);
         break;
+      case 'main': {
+        const mm = sh.main;
+        key = 'main|' + mm.type + '|' + mm.name + '|' + mm.dex + '|' + mm.hours + ':' + mm.minutes + '|' + mm.badges;
+        html = () => this._mainMenuHtml(mm);
+        break;
+      }
       case 'sqty': {
         const s = sh.shop;
         const row = s.items.find((x) => x.id === s.item) || { price: 0, owned: 0 };

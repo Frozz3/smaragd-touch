@@ -103,6 +103,7 @@ export class TextLayer {
     const u8 = new Uint8Array(mem.buffer);
     u8[br.base + XPAD0] = ctl;
     u8[br.base + XPAD1] = beat;
+    this.input.beatFrame = this.input.frame;
   }
 
   /** Pro Bild aufrufen (nach stage.update). */

@@ -1,6 +1,6 @@
 // Service Worker: (1) macht die App offline startklar, (2) ergänzt die Header für
 // "Cross-Origin Isolation", falls der Server sie nicht selbst sendet (z. B. GitHub Pages).
-const CACHE = 'smaragd-touch-v14';
+const CACHE = 'smaragd-touch-v15';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/style.css',
   'js/app.js', 'js/emu.js', 'js/input.js', 'js/touch.js', 'js/view.js', 'js/world.js', 'js/stage.js', 'js/bridge.js', 'js/ui.js', 'js/data.js', 'js/menus.js', 'js/skins.js', 'js/textlayer.js', 'js/charmap.js', 'js/battle.js', 'js/scenery.js', 'js/frametap.js',

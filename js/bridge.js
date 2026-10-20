@@ -6,7 +6,7 @@ import { decodeGameString } from './data.js';
 export const TB_VERSION = 3;
 export const TB_SIZE = 160;
 
-export const UI = { NONE: 0, MENU: 1, BATTLE_ACTION: 2, BATTLE_MOVE: 3, PARTY: 4, KEYBOARD: 5, OPTIONS: 6 };
+export const UI = { NONE: 0, MENU: 1, BATTLE_ACTION: 2, BATTLE_MOVE: 3, PARTY: 4, KEYBOARD: 5, OPTIONS: 6, CLOCK: 7 };
 export const FLAG = {
   FIELD_FREE: 1 << 0,
   WRAP: 1 << 1,
@@ -17,7 +17,14 @@ export const FLAG = {
   BATTLE_MAIN: 1 << 6,
   FADING: 1 << 7,
 };
-export const XTYPE = { NONE: 0, BATTLE: 1, BATTLE_MOVE: 2, NAMING: 3 };
+export const XTYPE = { NONE: 0, BATTLE: 1, BATTLE_MOVE: 2, NAMING: 3, GENDER: 4, MAINMENU: 5 };
+
+// Befehle der App an das Spiel (Gegenstück: TBC_* in include/touch_bridge.h)
+export const CMD = { NAME_KEY: 1, NAME_BACK: 2, NAME_PAGE: 3, NAME_OK: 4, GENDER: 5, CLOCK_SET: 6, CLOCK_OK: 7 };
+const OFF_ARG = 32; // pad[0..1]
+const OFF_SEQ = 82; // pad2[0]
+const OFF_TYPE = 83; // pad2[1]
+const OFF_ACK = 127; // xpad[2]
 
 // Aktionsnummern im Startmenü (Reihenfolge wie in src/start_menu.c)
 export const START_ACTION = {
@@ -107,6 +114,30 @@ export class Bridge {
     return h[0] === 0x45 && h[1] === 0x54 && h[2] === 0x42 && h[3] === 0x31;
   }
 
+  /**
+   * Schreibt einen Befehl für das Spiel (nur eine Stelle, das Spiel liest sie einmal pro Bild).
+   * Liefert die laufende Nummer (1-127) oder 0, wenn die Struktur nicht erreichbar ist.
+   */
+  sendCommand(type, arg) {
+    const mem = this.getMemory();
+    if (!mem || this.base < 0) return 0;
+    const u8 = new Uint8Array(mem.buffer);
+    let seq = (u8[this.base + OFF_SEQ] & 0x7f) + 1;
+    if (seq > 127) seq = 1;
+    u8[this.base + OFF_ARG] = arg & 255;
+    u8[this.base + OFF_ARG + 1] = (arg >> 8) & 255;
+    u8[this.base + OFF_TYPE] = type;
+    u8[this.base + OFF_SEQ] = seq;
+    return seq;
+  }
+
+  /** Quittung des Spiels: Nummer = angenommen, Nummer | 0x80 = verworfen. */
+  ackByte() {
+    const mem = this.getMemory();
+    if (!mem || this.base < 0) return 0;
+    return new Uint8Array(mem.buffer, this.base + OFF_ACK, 1)[0];
+  }
+
   /** Liefert einen konsistenten Schnappschuss oder null. */
   read() {
     const mem = this.getMemory();
@@ -137,6 +168,20 @@ export class Bridge {
       }
       const xtype = this.buf[84];
       snap.xtype = xtype;
+      snap.gender = xtype === XTYPE.GENDER; // Einführung: Geschlechtswahl (beide Figuren nebeneinander)
+      snap.clock = snap.ui === UI.CLOCK ? { h: this.buf[85], m: this.buf[104] } : null; // Uhr stellen
+      snap.main = null; // Hauptmenü (Spielstand-Angaben)
+      if (xtype === XTYPE.MAINMENU && snap.ui === UI.MENU) {
+        const dex = dv.getUint16(86, true);
+        snap.main = {
+          type: this.buf[124], // 0 nur Neues Spiel, 1 Fortsetzen, 2 + Mystery Gift, 3 + Mystery Events
+          name: decodeGameString(this.buf.subarray(108, 116)),
+          dex: dex === 0xffff ? -1 : dex,
+          hours: dv.getUint16(120, true),
+          minutes: dv.getUint16(122, true),
+          badges: this.buf[85],
+        };
+      }
       snap.kb = null;
       snap.opt = null;
       snap.info = null;

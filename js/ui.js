@@ -1,7 +1,7 @@
 // Oberfläche über dem Spielbild: Pokéball-Menü, Kampfmenü, Tastatur, Schließen-Taste (X), Steuerkreuz.
 // Alles hängt am Zustand, den die TouchBridge meldet (siehe computeMode).
 
-import { UI, FLAG } from './bridge.js';
+import { UI, FLAG, CMD } from './bridge.js';
 import { START_ACTION } from './input.js';
 import { MOVE_NAMES, TYPES } from './data.js';
 import { CHARMAP } from './charmap.js';
@@ -123,21 +123,116 @@ export class Ui {
       b.addEventListener('click', () => this._pickIndex(+b.dataset.i, 'battleAction'));
     }
 
-    // Tastatur
+    // Tastatur (Namenseingabe): direkte Befehle an das Spiel, kein Cursor-Bewegen
     for (const b of document.querySelectorAll('#kbTabs button')) {
       b.addEventListener('click', () => {
         const page = +b.dataset.page;
-        input.enqueue(() => input.kbSetPage(page), 3);
+        for (const o of document.querySelectorAll('#kbTabs button')) o.classList.toggle('on', o === b);
+        input.namePage(page);
       });
     }
     $('#kbSpace').addEventListener('click', () => {
       const s = this.input.snap;
       if (!s || !s.kb) return;
       const [c, r] = s.kb.page === 0 ? KB_SPACE.symbols : KB_SPACE.letters;
-      input.enqueue(() => input.kbKey(c, r), 4);
+      this._nameKey(c, r);
     });
-    $('#kbDel').addEventListener('click', () => input.enqueue(() => input.kbButton(1), 4));
-    $('#kbOk').addEventListener('click', () => { input.clearQueue(); input.enqueue(() => input.kbButton(2), 2); });
+    $('#kbDel').addEventListener('click', () => input.nameBack());
+    $('#kbOk').addEventListener('click', () => input.nameOk());
+    this._bindClock();
+  }
+
+  /** Taste der angezeigten Seite tippen (bei vollem Namen nur Löschen/OK sinnvoll: Taste wird ignoriert). */
+  _nameKey(col, row) {
+    const s = this.input.snap;
+    if (!s || !s.kb) return;
+    const nm = s.name;
+    if (nm && nm.chars.length >= nm.max) return;
+    this.input.nameKey(col, row, s.kb.page);
+  }
+
+  // ---------- Uhr stellen ----------
+  _bindClock() {
+    const c = (this.clock = { h: 10, m: 0, sentH: -1, sentM: -1, sending: false, init: false, rep: 0, pump: null });
+    const stop = () => { clearTimeout(c.rep); c.rep = 0; };
+    for (const b of document.querySelectorAll('#clockPanel [data-d]')) {
+      const [kind, amt] = [b.dataset.d[0], parseInt(b.dataset.d.slice(1), 10)];
+      const step = () => this._clockStep(kind === 'h' ? amt : 0, kind === 'm' ? amt : 0);
+      b.addEventListener('pointerdown', (e) => {
+        try { b.setPointerCapture?.(e.pointerId); } catch (_) { /* synthetische Ereignisse */ }
+        e.preventDefault();
+        step();
+        stop();
+        let n = 0;
+        const again = () => { step(); n++; c.rep = setTimeout(again, n > 12 ? 45 : n > 5 ? 70 : 110); };
+        c.rep = setTimeout(again, 380);
+      });
+      for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) b.addEventListener(ev, stop);
+    }
+    $('#ckNow').addEventListener('click', () => this._clockNow());
+    $('#ckOk').addEventListener('click', async () => {
+      $('#ckOk').disabled = true;
+      await this._clockFlush();
+      await this.input.command(CMD.CLOCK_OK);
+    });
+  }
+
+  _clockPaint() {
+    const c = this.clock;
+    $('#ckH').textContent = String(c.h).padStart(2, '0');
+    $('#ckM').textContent = String(c.m).padStart(2, '0');
+  }
+
+  _clockStep(dh, dm) {
+    const c = this.clock;
+    c.h = (c.h + dh + 24) % 24;
+    if (dm) c.m = ((c.m + dm) % 60 + 60) % 60;
+    this._clockPaint();
+    this._clockPump();
+  }
+
+  _clockNow() {
+    const d = new Date();
+    const c = this.clock;
+    c.h = d.getHours();
+    c.m = d.getMinutes();
+    this._clockPaint();
+    this._clockPump();
+  }
+
+  /** Schickt den jeweils neuesten Wert (schnelles Antippen darf sich nicht aufstauen). */
+  _clockPump() {
+    const c = this.clock;
+    if (c.pump) return c.pump;
+    c.pump = (async () => {
+      try {
+        while (c.h !== c.sentH || c.m !== c.sentM) {
+          c.sentH = c.h;
+          c.sentM = c.m;
+          await this.input.command(CMD.CLOCK_SET, (c.h << 8) | c.m);
+        }
+      } finally {
+        c.pump = null;
+      }
+    })();
+    return c.pump;
+  }
+
+  async _clockFlush() {
+    const c = this.clock;
+    if (c.h !== c.sentH || c.m !== c.sentM) this._clockPump();
+    while (c.pump) await c.pump;
+  }
+
+  /** Beim Öffnen der Uhr: die Zeit des Handys einstellen (ein Tipp auf „Fertig“ genügt). */
+  _updateClock(snap) {
+    const c = this.clock;
+    if (this.mode !== 'clock') { c.init = false; return; }
+    if (c.init || !snap || !snap.clock) return;
+    c.init = true;
+    c.sentH = c.sentM = -1;
+    $('#ckOk').disabled = false;
+    this._clockNow();
   }
 
   /** Eintrag der aktuellen Menüanzeige per Index wählen (Kampfmenüs). */
@@ -157,8 +252,11 @@ export class Ui {
   computeMode(snap) {
     const input = this.input;
     if (!input.hasBridge || !snap) return 'nobridge';
+    // Seitenwechsel der Tastatur: das Spiel nimmt währenddessen keine Eingaben an (ui = 0), die Tastatur soll stehen bleiben
+    if (snap.ui === UI.NONE && snap.name && this.mode === 'keyboard') return 'keyboard';
     switch (snap.ui) {
       case UI.KEYBOARD: return 'keyboard';
+      case UI.CLOCK: return input.cmdOk ? 'clock' : 'special'; // ohne Direktbefehle bleibt das Steuerkreuz
       case UI.BATTLE_ACTION: return 'battleAction';
       case UI.BATTLE_MOVE: return 'battleMove';
       case UI.MENU: case UI.PARTY: case UI.OPTIONS: return 'menu';
@@ -178,7 +276,7 @@ export class Ui {
       this.candSince = f;
     }
     // Panels verschwinden erst nach ein paar Frames Ruhe, damit nichts flackert
-    const isPanel = (m) => m === 'battleAction' || m === 'battleMove' || m === 'keyboard' || m === 'menu';
+    const isPanel = (m) => m === 'battleAction' || m === 'battleMove' || m === 'keyboard' || m === 'menu' || m === 'clock';
     const wait = isPanel(this.mode) && !isPanel(next) ? 8 : 0;
     if (next !== this.mode && f - this.candSince >= wait) this._setMode(next);
 
@@ -195,6 +293,7 @@ export class Ui {
     this.view.setEdgeKey(this.mode === 'field' || (!!snap && (snap.flags & FLAG.OVERWORLD) !== 0));
 
     this._updateNaming(snap);
+    this._updateClock(snap);
     if (snap) {
       if (this.mode === 'battleAction' || this.mode === 'battleMove') this._updateBattle(snap);
       if (this.mode === 'keyboard' && snap.kb) this._updateKeyboard(snap.kb);
@@ -384,7 +483,7 @@ export class Ui {
         const b = document.createElement('button');
         b.className = 'kb-key';
         b.textContent = label;
-        b.addEventListener('click', () => this.input.enqueue(() => this.input.kbKey(col, y), 5));
+        b.addEventListener('click', () => this._nameKey(col, y));
         box.appendChild(b);
       }
       // Reihen mit weniger Tasten auffüllen, damit das Raster gerade bleibt
