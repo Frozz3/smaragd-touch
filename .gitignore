@@ -1,0 +1,11 @@
+# Niemals Spiel- oder Speicherdateien hochladen
+*.gba
+*.gb
+*.gbc
+*.sav
+*.ss0
+*.ss1
+*.ss2
+*.ss3
+*.zip
+*.7z

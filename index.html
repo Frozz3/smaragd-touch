@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Smaragd">
+<meta name="theme-color" content="#04100b">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Smaragd Touch</title>
+<link rel="stylesheet" href="css/style.css">
+<script>
+  // Der Emulator braucht "Cross-Origin Isolation". Liefert der Server die Header
+  // nicht selbst (z. B. GitHub Pages), übernimmt das der Service Worker (sw.js).
+  (function () {
+    if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      if (!window.crossOriginIsolated && !navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener('controllerchange', function () { location.reload(); });
+      }
+    }).catch(function () {});
+  })();
+</script>
+</head>
+<body>
+
+<!-- Symbole -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v9a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V9a2 2 0 0 0-2-2h-1V6a3 3 0 0 0-3-3H9Zm0 2h6a1 1 0 0 1 1 1v1H8V6a1 1 0 0 1 1-1Zm-4 6h14v2h-5v1.5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V13H5v-2Z"/></symbol>
+    <symbol id="i-team" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2c3.9 0 7.1 2.9 7.9 6.6h-4.4a4 4 0 0 0-7 0H4.1C4.9 6.9 8.1 4 12 4Zm0 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm0 10c-3.9 0-7.1-2.9-7.9-6.6h4.4a4 4 0 0 0 7 0h4.4C19.1 17.1 15.9 20 12 20Z"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path fill="currentColor" d="M5 3h11l4 4v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 1-2Zm2 2v5h9V5H7Zm5 8a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></symbol>
+    <symbol id="i-dex" viewBox="0 0 24 24"><path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v6h10V4H7Zm1 9a1.4 1.4 0 1 0 0 2.8A1.4 1.4 0 0 0 8 13Zm4 0h5v2h-5v-2Zm-4 4h9v2H8v-2Z"/></symbol>
+    <symbol id="i-nav" viewBox="0 0 24 24"><path fill="currentColor" d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 3v9h8V5H8Zm4 11.2a1.4 1.4 0 1 0 0 2.8 1.4 1.4 0 0 0 0-2.8Z"/></symbol>
+    <symbol id="i-pc" viewBox="0 0 24 24"><path fill="currentColor" d="M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1h-6v2h3v2H7v-2h3v-2H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm1 2v8h14V6H5Z"/></symbol>
+    <symbol id="i-person" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 11c4.4 0 8 2.2 8 5v2H4v-2c0-2.8 3.6-5 8-5Z"/></symbol>
+    <symbol id="i-opt" viewBox="0 0 24 24"><path fill="currentColor" d="M4 7h9.1a3 3 0 0 1 5.8 0H20v2h-1.1a3 3 0 0 1-5.8 0H4V7Zm12 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2ZM4 15h1.1a3 3 0 0 1 5.8 0H20v2h-9.1a3 3 0 0 1-5.8 0H4v-2Zm4 0a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path fill="currentColor" d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/></symbol>
+    <symbol id="i-ff" viewBox="0 0 24 24"><path fill="currentColor" d="M4 6.5v11a1 1 0 0 0 1.6.8l7-5.5a1 1 0 0 0 0-1.6l-7-5.5A1 1 0 0 0 4 6.5Zm9 0v11a1 1 0 0 0 1.6.8l7-5.5a1 1 0 0 0 0-1.6l-7-5.5A1 1 0 0 0 13 6.5Z"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path fill="currentColor" d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6a.5.5 0 0 0 .1-.6l-1.9-3.3a.5.5 0 0 0-.6-.2l-2.4 1a7.4 7.4 0 0 0-1.7-1l-.4-2.5a.5.5 0 0 0-.5-.4h-3.8a.5.5 0 0 0-.5.4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1a.5.5 0 0 0-.6.2L2.6 8.8a.5.5 0 0 0 .1.6l2 1.6a7.7 7.7 0 0 0 0 2l-2 1.6a.5.5 0 0 0-.1.6l1.9 3.3c.1.2.4.3.6.2l2.4-1c.5.4 1.1.7 1.7 1l.4 2.5c0 .2.2.4.5.4h3.8c.3 0 .5-.2.5-.4l.4-2.5c.6-.3 1.2-.6 1.7-1l2.4 1c.2.1.5 0 .6-.2l1.9-3.3a.5.5 0 0 0-.1-.6l-2-1.6ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path fill="currentColor" d="M14.7 5.3a1 1 0 0 1 0 1.4L9.4 12l5.3 5.3a1 1 0 1 1-1.4 1.4l-6-6a1 1 0 0 1 0-1.4l6-6a1 1 0 0 1 1.4 0Z"/></symbol>
+    <symbol id="i-del" viewBox="0 0 24 24"><path fill="currentColor" d="M9 5h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H9l-6-7 6-7Zm2.7 3.3L10.3 9.7 12.6 12l-2.3 2.3 1.4 1.4L14 13.4l2.3 2.3 1.4-1.4L15.4 12l2.3-2.3-1.4-1.4L14 10.6l-2.3-2.3Z"/></symbol>
+    <symbol id="i-pad" viewBox="0 0 24 24"><path fill="currentColor" d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7V2Z"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path fill="currentColor" d="M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12l5.6 5.6-1.4 1.4-5.6-5.6L6.4 19 5 17.6l5.6-5.6L5 6.4 6.4 5Z"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path fill="currentColor" d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm0 2v14h10V4H7Zm5 15.2a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8Z"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 96 96">
+      <defs>
+        <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9dffd9"/><stop offset="1" stop-color="#14a870"/></linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5df2b8"/><stop offset="1" stop-color="#0c7a52"/></linearGradient>
+      </defs>
+      <path d="M26 14h44l20 24-42 46L6 38 26 14Z" fill="url(#g2)"/>
+      <path d="M26 14h44L58 38H38L26 14Z" fill="url(#g1)"/>
+      <path d="M6 38h32l10 46L6 38Zm84 0H58L48 84l42-46Z" fill="#0f9a68" opacity=".75"/>
+      <path d="M38 38h20L48 84 38 38Z" fill="#26d792"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div id="app" data-mode="field">
+
+  <!-- Hintergrund und Spielbild -->
+  <canvas id="ambient"></canvas>
+  <canvas id="emu" width="240" height="160"></canvas>
+  <canvas id="view"></canvas>
+  <canvas id="stage"></canvas>
+  <canvas id="txFrame"></canvas>
+  <!-- Kampf: eigene Kulisse über dem ganzen Bildschirm, darüber die ausgestanzten Sprites des Spiels -->
+  <div id="bScene" aria-hidden="true">
+    <canvas id="bBg"></canvas>
+    <canvas id="bDyn"></canvas>
+    <div id="bBgFade"></div>
+    <canvas id="bSprites"></canvas>
+    <canvas id="bWx"></canvas>
+  </div>
+  <div id="fx"></div>
+
+  <!-- Berührungsfläche für Ziehen (Laufen/Scrollen) und Antippen -->
+  <div id="touch"></div>
+  <div id="stick"><div id="knob"></div></div>
+  <div id="hint"><b>Ziehen</b> zum Laufen · <b>Antippen</b> zum Bestätigen</div>
+
+  <!-- Obere Leiste -->
+  <div id="hudTop">
+    <button class="chip" id="btnSpeed" aria-label="Tempo"><svg><use href="#i-ff"/></svg><span id="speedLabel">1×</span></button>
+    <button class="chip round" id="btnSettings" aria-label="Einstellungen"><svg><use href="#i-gear"/></svg></button>
+  </div>
+  <button class="chip round" id="closeX" aria-label="Schließen"><svg><use href="#i-close"/></svg></button>
+
+  <!-- Schnellzugriff unten (wie in modernen Handyspielen) -->
+  <nav id="dock" aria-label="Schnellzugriff">
+    <button class="dockbtn" id="dockBag" data-act="bag" aria-label="Beutel"><svg><use href="#i-bag"/></svg><span>Beutel</span></button>
+    <button class="ball" id="ballBtn" aria-label="Hauptmenü"><i></i></button>
+    <button class="dockbtn" id="dockTeam" data-act="team" aria-label="Team"><svg><use href="#i-team"/></svg><span>Team</span></button>
+  </nav>
+
+  <!-- Hauptmenü (Pokéball) -->
+  <div id="mainmenu" aria-label="Hauptmenü">
+    <div class="mm-back"></div>
+    <div class="mm-grid" id="mmGrid"></div>
+    <button class="mm-close" id="mmClose" aria-label="Schließen"><svg><use href="#i-close"/></svg></button>
+  </div>
+
+  <!-- Steuerkreuz für Sonderbildschirme (Pokédex, PC-Boxen, ...) -->
+  <button class="chip round" id="dpadToggle" aria-label="Steuerkreuz"><svg><use href="#i-pad"/></svg></button>
+  <div id="dpad">
+    <button data-k="Up" aria-label="Hoch"></button>
+    <button data-k="Left" aria-label="Links"></button>
+    <button data-k="Right" aria-label="Rechts"></button>
+    <button data-k="Down" aria-label="Runter"></button>
+  </div>
+
+  <!-- Kampfmenü -->
+  <section id="battle" aria-label="Kampf">
+    <div class="b-prompt"><span id="bPrompt">Was nun?</span></div>
+    <div class="gba-win b-head">
+      <div class="b-name"><span id="bName">–</span><span class="b-lv">Lv<span id="bLv">0</span></span></div>
+      <div class="b-hp"><span class="b-hp-label">KP</span><span class="b-bar"><i id="bBar"></i></span><span class="b-hp-num" id="bHp">0/0</span></div>
+    </div>
+    <div id="bActions" class="b-grid">
+      <button class="gba-btn act-fight" data-i="0"><b>Kampf</b><small>Attacke wählen</small></button>
+      <button class="gba-btn act-bag" data-i="1"><b>Beutel</b><small>Items nutzen</small></button>
+      <button class="gba-btn act-mon" data-i="2"><b>Pokémon</b><small>Wechseln</small></button>
+      <button class="gba-btn act-run" data-i="3"><b>Flucht</b><small>Weglaufen</small></button>
+    </div>
+    <div id="bMoves" class="b-grid moves"></div>
+  </section>
+
+  <div id="txCards"></div>
+  <div id="bUi"></div>
+  <div id="mapBanner" aria-hidden="true"><b></b></div>
+  <div id="veil"></div>
+
+  <!-- Beutel im Stil des Kampfmenüs -->
+  <section id="bagSkin" aria-label="Beutel">
+    <header class="bs-head bs-headrow"><b id="bsTitle">Beutel</b><span class="sh-money" id="bsMoney"></span></header>
+    <div class="bs-tabs" id="bsTabs"></div>
+    <div class="bs-list" id="bsList"></div>
+  </section>
+
+  <!-- Team im Stil des Kampfmenüs -->
+  <section id="partySkin" aria-label="Team">
+    <header class="bs-head"><b>Team</b><span id="psPrompt"></span></header>
+    <div class="ps-list" id="psList"></div>
+  </section>
+
+  <!-- Pokédex im Stil des Kampfmenüs: Liste und Detailseite -->
+  <section id="dexSkin" aria-label="Pokédex">
+    <header class="bs-head"><b>Pokédex</b><span id="dxCount"></span></header>
+    <div class="dx-list" id="dxList"></div>
+  </section>
+  <section id="dexInfo" aria-label="Pokédex-Eintrag">
+    <header class="bs-head"><b id="diTitle">Pokédex</b><span id="diNo"></span></header>
+    <div class="di-body" id="diBody"></div>
+  </section>
+
+  <!-- Pokémon-Details und Trainerkarte im Stil des Kampfmenüs -->
+  <section id="sumSkin" aria-label="Pokémon-Details">
+    <header class="bs-head"><b>Details</b><span id="smNo"></span></header>
+    <div class="di-body" id="smBody"></div>
+  </section>
+  <section id="trSkin" aria-label="Trainerkarte">
+    <header class="bs-head"><b>Trainerkarte</b></header>
+    <div class="di-body" id="trBody"></div>
+  </section>
+
+  <!-- PokéMart (Kaufen) im Stil des Kampfmenüs -->
+  <section id="shopSkin" aria-label="PokéMart">
+    <header class="bs-head bs-headrow"><b>PokéMart</b><span class="sh-money" id="shMoney"></span></header>
+    <div class="bs-list sh-list" id="shList"></div>
+  </section>
+
+  <!-- Optionen im Stil des Kampfmenüs -->
+  <section id="optSkin" aria-label="Optionen">
+    <header class="bs-head"><b>Optionen</b></header>
+    <div class="os-list" id="osList"></div>
+  </section>
+
+  <!-- Aktionsfenster (Item-Aktionen, Menge, Ja/Nein, Meldungen) -->
+  <div id="actBack"></div>
+  <section id="actSheet" aria-label="Auswahl"><div id="asBody"></div></section>
+
+  <!-- Namenseingabe: Titel, Symbol und Namensfeld (darunter die Tastatur) -->
+  <section id="nameSkin" aria-label="Namenseingabe">
+    <header class="bs-head"><b id="nmTitle">Name</b></header>
+    <div class="nm-card gba-win">
+      <div class="nm-top"><span class="nm-ic" id="nmIc"></span><span class="nm-sub" id="nmSub"></span></div>
+      <div class="nm-slots" id="nmSlots"></div>
+      <div class="nm-hint" id="nmHint"></div>
+    </div>
+  </section>
+
+  <!-- Bildschirm-Tastatur (Namenseingabe) -->
+  <section id="kbd" aria-label="Tastatur">
+    <div class="kb-tabs" id="kbTabs">
+      <button data-page="1">ABC</button>
+      <button data-page="2">abc</button>
+      <button data-page="0">123</button>
+    </div>
+    <div class="kb-keys" id="kbKeys"></div>
+    <div class="kb-bottom">
+      <button class="kb-key wide" id="kbSpace">Leerzeichen</button>
+      <button class="kb-key" id="kbDel" aria-label="Löschen"><svg><use href="#i-del"/></svg></button>
+      <button class="kb-key ok" id="kbOk">OK</button>
+    </div>
+  </section>
+
+  <div id="perf" hidden></div>
+  <div id="toast"></div>
+</div>
+
+<div id="sheetwrap">
+  <div id="sheet" role="dialog" aria-label="Einstellungen">
+    <div class="grip"></div>
+
+    <h2>Spiel</h2>
+    <div class="row"><div>Schnellspeicher<small>Ganzen Spielstand sofort sichern oder laden</small></div>
+      <div style="display:flex;gap:8px"><button class="btn primary" id="qsSave">Sichern</button><button class="btn" id="qsLoad">Laden</button></div></div>
+    <div class="row"><div>Tempo<small>Schneller Vorlauf für Text und Wege</small></div>
+      <div class="seg" id="segSpeed"><button data-v="1">1×</button><button data-v="2">2×</button><button data-v="3">3×</button><button data-v="4">4×</button></div></div>
+    <div class="row"><div>Lautstärke</div><input type="range" id="vol" min="0" max="150" step="5"></div>
+
+    <h2>Ansicht</h2>
+    <div class="row"><div>Zoom beim Laufen<small>Spielbild wird groß, sobald du frei läufst. Bei Text und Menüs immer volle Breite</small></div>
+      <div class="seg" id="segZoom"><button data-v="1">Aus</button><button data-v="1.25">Leicht</button><button data-v="1.5">Stark</button></div></div>
+    <div class="row"><div>Karte füllt den Bildschirm<small>Zeichnet die Spielwelt oben und unten weiter (statt eines weichen Rands). Bei Kämpfen, Höhlen und Regen nicht möglich</small></div>
+      <label class="switch"><input type="checkbox" id="optWorld"><span></span></label></div>
+    <div class="row"><div>Dialoge unten<small>Textboxen am unteren Bildschirmrand statt mitten im Bild</small></div>
+      <label class="switch"><input type="checkbox" id="optDock"><span></span></label></div>
+    <div class="row"><div>Vollbild-Kampf<small>Eigene Kulissen und Statuskarten über den ganzen Bildschirm</small></div>
+      <label class="switch"><input type="checkbox" id="optBattle"><span></span></label></div>
+    <div class="row"><div>Weicher Rand<small>Setzt das Bild oben und unten verschwommen fort</small></div>
+      <label class="switch"><input type="checkbox" id="optAmbient"><span></span></label></div>
+    <div class="row"><div>Bild glätten<small>Weicher bei krummen Skalierungen</small></div>
+      <label class="switch"><input type="checkbox" id="optSmooth"><span></span></label></div>
+
+    <div class="row"><div>Leistungsanzeige<small>Zeigt oben links Bilder pro Sekunde und die längste Bildzeit – hilfreich, um Ruckler zu melden</small></div>
+      <label class="switch"><input type="checkbox" id="optPerf"><span></span></label></div>
+
+    <h2>Steuerung</h2>
+    <div class="row"><div>Laufen<small>Wie schnell die Figur unterwegs ist</small></div>
+      <div class="seg" id="segRun"><button data-v="drag">Weit ziehen</button><button data-v="always">Immer</button><button data-v="never">Nie</button></div></div>
+    <div class="row"><div>Tipp-Hilfe<small>Zeigt, welcher Menüpunkt getroffen wurde</small></div>
+      <label class="switch"><input type="checkbox" id="optFx"><span></span></label></div>
+
+    <h2>Daten</h2>
+    <div class="row"><div>Spielstand exportieren<small>Die .sav-Datei zum Sichern</small></div><button class="btn" id="exportSave">Export</button></div>
+    <div class="row"><div>Spielstand importieren</div><button class="btn" id="importSave">Datei wählen</button></div>
+    <div class="row"><div>ROM wechseln<small id="romInfo">–</small></div><button class="btn" id="changeRom">Auswählen</button></div>
+    <div class="row"><div>Neu starten<small>Wie Reset am Gerät, Spielstand bleibt</small></div><button class="btn" id="reset">Reset</button></div>
+
+    <div style="height:10px"></div>
+    <button class="btn primary" id="closeSheet" style="width:100%;padding:13px">Fertig</button>
+  </div>
+</div>
+
+<div id="boot">
+  <svg class="gem"><use href="#i-gem"/></svg>
+  <h1>Smaragd Touch</h1>
+  <p id="bootMsg">Lade Emulator …</p>
+  <div class="stack" id="bootBtns"></div>
+</div>
+
+<div id="rotate"><svg><use href="#i-rotate"/></svg>Bitte das Handy hochkant halten</div>
+
+<input type="file" id="romFile" hidden>
+<input type="file" id="saveFile" hidden>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
